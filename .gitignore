@@ -1,0 +1,57 @@
+# ThermalEye — .gitignore
+# ──────────────────────────────────────────────
+
+# ── Environment & Secrets ──
+.env
+.env.local
+.env.*.local
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ── Data & Binary Outputs ──
+*.parquet
+*.pkl
+data/raw/*
+!data/raw/.gitkeep
+data/outputs/
+data/ground_truth/*.csv
+!data/ground_truth/.gitkeep
+
+# ── Models ──
+models/*.bin
+models/*.txt
+!models/.gitkeep
+
+# ── Node / Frontend ──
+node_modules/
+app/frontend/node_modules/
+.next/
+app/frontend/.next/
+out/
+app/frontend/out/
+.turbo/
+app/frontend/.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── IDE & OS ──
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

@@ -1,0 +1,41 @@
+# ──────────────────────────────────────────────────────────────────────────
+# ThermalEye — Python Dependencies
+# AI-Based Detection & Classification of Industrial Fires & Thermal Sources
+# SIH 2026 | Problem: SIH26162YELLOW
+# ──────────────────────────────────────────────────────────────────────────
+
+# ── Core Data ──
+pandas>=2.0
+numpy>=1.24
+pyarrow
+
+# ── Spatial & Geospatial ──
+h3>=4.0
+shapely>=2.0
+geopandas>=0.14
+
+# ── ML & Classification ──
+lightgbm>=4.0
+scikit-learn>=1.3
+
+# ── API Server ──
+fastapi>=0.110
+uvicorn[standard]>=0.29
+sse-starlette>=1.6          # Server-Sent Events for agent pipeline streaming
+
+# ── LLM & AI Orchestration ──
+langgraph>=0.2
+openai>=1.30                # NVIDIA NIM + Gemini compatible SDK
+groq>=0.5                   # Groq fallback LLM provider
+
+# ── Satellite & Earth Observation ──
+earthengine-api>=1.0        # Google Earth Engine (Sentinel-2 & Sentinel-5P)
+requests>=2.31              # NASA FIRMS, VNF, Overpass, Open-Meteo
+
+# ── PDF & Voice ──
+reportlab>=4.0              # Legal enforcement memo PDF generation
+gtts>=2.3                   # Google Text-to-Speech (Hindi/English advisories)
+
+# ── Utilities ──
+python-dotenv>=1.0          # .env loader (fallback, hand-rolled primary)
+httpx>=0.27                 # Async HTTP client for concurrent API fetching

@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # ThermalEye
 
@@ -673,4 +673,3 @@ Deep-dive documents are in the [`reference/`](reference/) folder:
 *Satellite Signal → Deterministic Attribution → Statutory Legal Enforcement*
 
 </div>
-]]>

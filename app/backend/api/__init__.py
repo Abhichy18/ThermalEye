@@ -1,0 +1,1 @@
+"""ThermalEye API Router Endpoints."""

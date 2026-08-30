@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import DeckGL from '@deck.gl/react';
 import { ColumnLayer, ScatterplotLayer, TextLayer, PathLayer } from '@deck.gl/layers';
 import { H3HexagonLayer } from '@deck.gl/geo-layers';
+import { FlyToInterpolator } from '@deck.gl/core';
 import Map from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -119,6 +120,9 @@ export default function ThermalDeckMap({
   const [showHexGrid, setShowHexGrid] = useState<boolean>(true);
   const [showLabels, setShowLabels] = useState<boolean>(true);
   const [pulseTick, setPulseTick] = useState<number>(0);
+  const [isOrbitalTransitioning, setIsOrbitalTransitioning] = useState<boolean>(false);
+
+  const prevRegionRef = useRef<RegionId>(region);
 
   useEffect(() => {
     if (basemapMode) setActiveBasemap(basemapMode);
@@ -137,19 +141,38 @@ export default function ThermalDeckMap({
     bearing: regionMeta.bearing || 0,
   });
 
-  // Re-centre when region changes
-  useEffect(() => {
-    const meta = REGIONS[region] || REGIONS.barmer;
+  // ─── Cinematic Earth Orbit-to-Ground Fly-To Transition ────────────────────
+  const triggerCinematicFlyTo = (targetRegion: RegionId) => {
+    const meta = REGIONS[targetRegion] || REGIONS.barmer;
+    setIsOrbitalTransitioning(true);
+
     setViewState({
       longitude: meta.lon,
       latitude: meta.lat,
       zoom: meta.zoom,
       pitch: is3dExtruded ? 55 : 0,
-      bearing: meta.bearing || 0,
-    });
+      bearing: meta.bearing || 15,
+      transitionDuration: 2800, // 2.8 seconds cinematic orbital flight
+      transitionInterpolator: new FlyToInterpolator({
+        speed: 1.0,
+        curve: 2.0, // High arc: pulls high into space orbit over India and swoops down!
+      }),
+    } as any);
+
+    setTimeout(() => {
+      setIsOrbitalTransitioning(false);
+    }, 2800);
+  };
+
+  // Trigger cinematic orbit zoom whenever sector changes
+  useEffect(() => {
+    if (prevRegionRef.current !== region) {
+      prevRegionRef.current = region;
+      triggerCinematicFlyTo(region);
+    }
   }, [region, is3dExtruded]);
 
-  // If a cluster is selected, smoothly fly camera to it
+  // If a specific cluster is selected in the sidebar, smoothly zoom to it
   useEffect(() => {
     if (!selectedClusterId) return;
     const target = clusters.find((c) => c.cluster_id === selectedClusterId);
@@ -158,13 +181,15 @@ export default function ThermalDeckMap({
         ...prev,
         longitude: target.centroid_lon,
         latitude: target.centroid_lat,
-        zoom: Math.max(prev.zoom, 12),
-        transitionDuration: 1000,
+        zoom: Math.max(prev.zoom, 12.5),
+        pitch: 58,
+        transitionDuration: 1200,
+        transitionInterpolator: new FlyToInterpolator({ speed: 1.5, curve: 1.2 }),
       } as any));
     }
   }, [selectedClusterId, clusters]);
 
-  // Gentle pulse animation ticker for tactical radar beacons
+  // Radar beacon pulsing animation
   useEffect(() => {
     const timer = setInterval(() => {
       setPulseTick((prev) => (prev + 1) % 60);
@@ -197,7 +222,6 @@ export default function ThermalDeckMap({
     return lines;
   }, [regionMeta, showWindVectors]);
 
-  // Pulse animation radius calculator
   const pulseFactor = 1 + 0.3 * Math.sin((pulseTick / 60) * Math.PI * 2);
 
   // Deck.gl Visual Layers
@@ -366,6 +390,47 @@ export default function ThermalDeckMap({
         <Map mapStyle={mapStyleDefinition} reuseMaps />
       </DeckGL>
 
+      {/* ── Cinematic Orbital Fly-In HUD Banner ─────────────────────────── */}
+      {isOrbitalTransitioning && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 60,
+            background: 'rgba(10, 14, 22, 0.92)',
+            border: '1px solid #3b82f6',
+            borderRadius: '10px',
+            padding: '10px 20px',
+            boxShadow: '0 0 30px rgba(59, 130, 246, 0.5), 0 8px 32px rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.75rem',
+            color: '#93c5fd',
+            letterSpacing: '0.05em',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          <span
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#3b82f6',
+              boxShadow: '0 0 12px #3b82f6',
+              animation: 'pulse 1s infinite',
+            }}
+          />
+          <span style={{ fontWeight: 700, color: '#ffffff' }}>
+            🛰️ ORBITAL SATELLITE VECTORING → LOCKING ON {regionMeta.name.toUpperCase()}...
+          </span>
+        </div>
+      )}
+
       {/* ── Top-Right Floating Google Earth & Tactical Switcher ────────────── */}
       <div
         style={{
@@ -476,10 +541,30 @@ export default function ThermalDeckMap({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '8px',
+            gap: '6px',
             color: '#a0a6ae',
           }}
         >
+          <button
+            onClick={() => triggerCinematicFlyTo(region)}
+            title="Replay Orbit Space-to-Ground Fly-In Animation"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #6366f1)',
+              color: '#ffffff',
+              border: '1px solid #a78bfa',
+              padding: '3px 8px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px',
+            }}
+          >
+            <span>🚀</span> Fly-In
+          </button>
+
           <button
             onClick={() => setShowHexGrid((v) => !v)}
             style={{
@@ -530,7 +615,7 @@ export default function ThermalDeckMap({
               fontWeight: 600,
             }}
           >
-            {viewState.pitch > 10 ? '3D View (55°)' : '2D Nadir (0°)'}
+            {viewState.pitch > 10 ? '3D View (55°)' : '2D (0°)'}
           </button>
         </div>
       </div>

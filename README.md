@@ -808,6 +808,16 @@ Deep-dive documents are in the [`reference/`](reference/) folder:
 
 ---
 
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+> **macOS / Linux Quick Start:** No `.bat` file needed — open two terminal tabs, run the backend (`python -m uvicorn app.backend.main:app --port 8000 --reload`) in one and the frontend (`cd app/frontend && npm run dev`) in the other.
+
+---
+
 <div align="center">
 
 **Built with determination for SIH 2026**

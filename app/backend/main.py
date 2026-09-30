@@ -2,6 +2,7 @@
 
 AI-Based Detection and Classification of Industrial Fires and Persistent Thermal Sources.
 SIH 2026 | Problem Statement: SIH26162YELLOW
+SIH PROBLEM STATEMENT: "26162"
 """
 import os
 import sys

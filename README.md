@@ -30,7 +30,7 @@
 - [7-Class Thermal Taxonomy](#-7-class-thermal-taxonomy)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
-- [Quick Start](#-quick-start)
+- [Local Development Setup](#-local-development-setup)
 - [API Reference](#-api-reference)
 - [UI Walkthrough](#-ui-walkthrough)
 - [Benchmark Results](#-benchmark-results)
@@ -395,43 +395,73 @@ ThermalEye/
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Local Development Setup
+
+This section walks you through setting up ThermalEye on your local machine from scratch. The system is designed to work **fully offline** with synthetic/cached data — no API keys are required to get started.
 
 ### Prerequisites
 
-| Tool | Version | Check Command |
-|---|---|---|
-| Python | 3.10+ (recommended 3.11/3.12) | `python --version` |
-| Node.js | 18+ (recommended 20 LTS) | `node --version` |
-| npm | 9+ | `npm --version` |
-| Git | any | `git --version` |
+Ensure the following tools are installed before proceeding:
 
-### 1. Clone
+| Tool | Minimum Version | Recommended | Check Command | Install Guide |
+|---|---|---|---|---|
+| **Python** | 3.10+ | 3.11 or 3.12 | `python --version` | [python.org/downloads](https://www.python.org/downloads/) |
+| **Node.js** | 18+ | 20 LTS or 22 LTS | `node --version` | [nodejs.org](https://nodejs.org/) |
+| **npm** | 9+ | (ships with Node.js) | `npm --version` | Included with Node.js |
+| **Git** | any | latest | `git --version` | [git-scm.com](https://git-scm.com/) |
+
+> **Verify all prerequisites** before continuing:
+> ```bash
+> python --version && node --version && npm --version && git --version
+> ```
+
+---
+
+### Step 1 — Clone the Repository
 
 ```bash
 git clone https://github.com/Abhichy18/ThermalEye.git
 cd ThermalEye
 ```
 
-### 2. Backend Setup (Python)
+---
+
+### Step 2 — Backend Setup (Python)
+
+#### 2a. Create a Virtual Environment
 
 ```bash
-# Create virtual environment
 python -m venv .venv
+```
 
-# Activate it
-# Windows PowerShell:
-.\.venv\Scripts\Activate.ps1
-# Windows CMD:
-.\.venv\Scripts\activate.bat
-# Linux / macOS:
-source .venv/bin/activate
+#### 2b. Activate the Virtual Environment
 
-# Install dependencies
+Choose the command for your platform:
+
+| Platform | Shell | Activation Command |
+|---|---|---|
+| **Windows** | PowerShell | `.\.venv\Scripts\Activate.ps1` |
+| **Windows** | CMD | `.\.venv\Scripts\activate.bat` |
+| **Linux / macOS** | Bash / Zsh | `source .venv/bin/activate` |
+
+> After activation you should see `(.venv)` at the beginning of your terminal prompt.
+
+> **PowerShell Execution Policy (Windows only):** If `.ps1` scripts are blocked, run this once as Administrator:
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+
+#### 2c. Install Python Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Frontend Setup (Node.js)
+This installs all backend packages including FastAPI, LightGBM, H3, GeoPandas, LangGraph, ReportLab, gTTS, and more. The full dependency list is in [`requirements.txt`](requirements.txt).
+
+---
+
+### Step 3 — Frontend Setup (Node.js)
 
 ```bash
 cd app/frontend
@@ -439,46 +469,158 @@ npm install
 cd ../..
 ```
 
-### 4. Environment Variables (Optional)
+This installs Next.js 15, React 19, Deck.gl v9, MapLibre GL, Recharts, and all other frontend dependencies listed in [`app/frontend/package.json`](app/frontend/package.json).
+
+---
+
+### Step 4 — Configure Environment Variables
 
 ```bash
-# Copy the template
+# Copy the template (use 'copy' on Windows CMD)
 cp .env.example .env
-
-# Edit .env with your API keys (all optional — system works offline)
-# FIRMS_API_KEY=your_nasa_firms_key
-# GEMINI_API_KEY=your_gemini_key
-# TE_REGION=barmer              # Default region to load
 ```
 
-### 5. Run
+Open `.env` in your editor and configure the following. **All keys are optional** — the system falls back to offline/synthetic mode gracefully:
 
-#### Option A: 1-Click (Windows)
+| Variable | Required? | Description | Where to Get It |
+|---|---|---|---|
+| `TE_REGION` | Optional | Default region to load (`barmer`, `punjab`, `delhi`, `hazira`, `jharia`, `india`) | Set to any supported region key |
+| `FIRMS_MAP_KEY` | Optional | NASA FIRMS active fire data API key | [firms.modaps.eosdis.nasa.gov](https://firms.modaps.eosdis.nasa.gov/api/area/) (free) |
+| `NVIDIA_NIM_KEY` | Optional | NVIDIA NIM LLM inference (primary) | [build.nvidia.com](https://build.nvidia.com/) (free trial) |
+| `GEMINI_API_KEY` | Optional | Google Gemini 2.5 Flash (LLM fallback #1) | [aistudio.google.com](https://aistudio.google.com/) (free tier) |
+| `GROQ_API_KEY` | Optional | Groq Llama 3.1 (LLM fallback #2) | [console.groq.com](https://console.groq.com/) (free) |
+| `GEE_PROJECT` | Optional | Google Earth Engine project ID (Sentinel-2 imagery) | [earthengine.google.com](https://earthengine.google.com/) |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Optional | Mapbox token for premium map tiles | [mapbox.com](https://www.mapbox.com/) (free tier) |
+
+> **Note:** Without any API keys, ThermalEye still runs fully — LLM narratives fall back to deterministic physics-based templates, and satellite data uses cached/synthetic samples.
+
+See [`.env.example`](.env.example) for the complete template with inline comments.
+
+---
+
+### Step 5 — Start the Development Servers
+
+#### Option A: 1-Click Startup (Windows)
+
+The included batch script launches both servers in separate terminal windows:
+
 ```cmd
 scripts\start_dev.bat
 ```
 
-#### Option B: Manual (Two Terminals)
+This starts:
+- **FastAPI backend** on `http://localhost:8000`
+- **Next.js frontend** on `http://localhost:3000`
+
+#### Option B: Manual Startup (Two Terminals)
 
 **Terminal 1 — Backend (FastAPI on port 8000):**
+
 ```bash
 python -m uvicorn app.backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+You should see output similar to:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+```
+
 **Terminal 2 — Frontend (Next.js on port 3000):**
+
 ```bash
 cd app/frontend
 npm run dev
 ```
 
-### 6. Open in Browser
+You should see output similar to:
+```
+▲ Next.js 15.x (Turbopack)
+- Local:   http://localhost:3000
+✓ Ready
+```
+
+> **Tip:** The `--reload` flag on Uvicorn enables hot-reload — any Python file changes are picked up automatically. Next.js also hot-reloads by default via Turbopack.
+
+---
+
+### Step 6 — Verify the Setup
+
+Open these URLs in your browser to confirm everything is running:
 
 | Page | URL | What You'll See |
 |---|---|---|
-| **Landing Page** | [http://localhost:3000](http://localhost:3000) | Role selection with live telemetry counters |
-| **Admin Console** | [http://localhost:3000/admin](http://localhost:3000/admin) | 3D thermal map + case file dossiers |
+| **Landing Page** | [http://localhost:3000](http://localhost:3000) | Role selection screen with live telemetry counters |
+| **Admin Console** | [http://localhost:3000/admin](http://localhost:3000/admin) | 3D thermal map + triage sidebar + case file dossiers |
 | **Citizen Portal** | [http://localhost:3000/citizen](http://localhost:3000/citizen) | Mobile-friendly voice notes + complaint form |
-| **API Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | Interactive Swagger documentation |
+| **API Health Check** | [http://localhost:8000/health](http://localhost:8000/health) | JSON response with `{status: "ok", region: "...", ...}` |
+| **Swagger API Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | Interactive API documentation (auto-generated by FastAPI) |
+
+---
+
+### Troubleshooting
+
+<details>
+<summary><strong>Port 8000 or 3000 already in use</strong></summary>
+
+Kill the conflicting process or use an alternate port:
+
+```bash
+# Backend on a different port
+python -m uvicorn app.backend.main:app --host 0.0.0.0 --port 8001 --reload
+
+# Frontend on a different port
+cd app/frontend
+npx next dev --port 3001
+```
+
+If you change the backend port, update the API base URL in the frontend config ([`app/frontend/src/lib/api.ts`](app/frontend/src/lib/api.ts)).
+</details>
+
+<details>
+<summary><strong><code>pip install</code> fails on Windows (GDAL / Fiona / GeoPandas)</strong></summary>
+
+Some geospatial libraries require pre-built wheels on Windows. Try:
+
+```bash
+pip install --upgrade pip wheel setuptools
+pip install -r requirements.txt
+```
+
+If GeoPandas still fails, install it via conda:
+```bash
+conda install -c conda-forge geopandas
+```
+</details>
+
+<details>
+<summary><strong>PowerShell blocks <code>.ps1</code> virtual-env activation</strong></summary>
+
+Run this once as Administrator:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then retry: `.\.venv\Scripts\Activate.ps1`
+</details>
+
+<details>
+<summary><strong><code>npm install</code> fails with peer dependency warnings</strong></summary>
+
+This is usually safe to ignore (React 19 peer deps). If it actually fails:
+
+```bash
+cd app/frontend
+npm install --legacy-peer-deps
+```
+</details>
+
+<details>
+<summary><strong>LLM narratives show template text instead of AI-generated prose</strong></summary>
+
+This is expected when no LLM API keys are configured. The system uses deterministic physics-based templates as a fallback. Add at least one LLM key (`GEMINI_API_KEY`, `GROQ_API_KEY`, or `NVIDIA_NIM_KEY`) in your `.env` file for AI-generated narratives.
+</details>
 
 ---
 
